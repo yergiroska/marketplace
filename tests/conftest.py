@@ -17,8 +17,8 @@ def db(app):
 def client(app):
     return app.test_client()
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='function', autouse=True)
 def db_session(db):
-    db.session.begin_nested()
+    db.session.rollback()
     yield db.session
     db.session.rollback()
