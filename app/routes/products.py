@@ -1,13 +1,91 @@
-from flask import Blueprint, render_template
-from flask_login import login_required
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
+from flask_login import login_required, current_user
+from app import db
+from app.models import Product, Category
+from app.forms import ProductForm
+from app.decorators import vendedor_required
+import os
+import uuid
 
 products = Blueprint('products', __name__)
 
 @products.route('/')
 def index():
-    return render_template('products/index.html')
+    all_products = Product.query.all()
+    return render_template('products/index.html', products=all_products)
 
 @products.route('/dashboard')
 @login_required
+@vendedor_required
 def dashboard():
-    return render_template('products/dashboard.html')
+    user_products = Product.query.filter_by(user_id=current_user.id).all()
+    return render_template('products/dashboard.html', products=user_products)
+
+@products.route('/products/create', methods=['GET', 'POST'])
+@login_required
+@vendedor_required
+def create():
+    form = ProductForm()
+    form.category_id.choices = [(c.id, c.name) for c in Category.query.all()]
+    if form.validate_on_submit():
+        image_filename = None
+        if form.image.data:
+            image_filename = save_image(form.image.data)
+        product = Product(
+            name=form.name.data,
+            description=form.description.data,
+            price=float(form.price.data),
+            stock=form.stock.data,
+            category_id=form.category_id.data,
+            image=image_filename,
+            user_id=current_user.id
+        )
+        db.session.add(product)
+        db.session.commit()
+        flash('Producto creado exitosamente.', 'success')
+        return redirect(url_for('products.dashboard'))
+    return render_template('products/create.html', form=form)
+
+@products.route('/products/<int:product_id>/edit', methods=['GET', 'POST'])
+@login_required
+@vendedor_required
+def edit(product_id):
+    product = Product.query.get_or_404(product_id)
+    if product.user_id != current_user.id:
+        flash('No tienes permiso para editar este producto.', 'danger')
+        return redirect(url_for('products.dashboard'))
+    form = ProductForm(obj=product)
+    form.category_id.choices = [(c.id, c.name) for c in Category.query.all()]
+    if form.validate_on_submit():
+        product.name = form.name.data
+        product.description = form.description.data
+        product.price = float(form.price.data)
+        product.stock = form.stock.data
+        product.category_id = form.category_id.data
+        from werkzeug.datastructures import FileStorage
+        if form.image.data and isinstance(form.image.data, FileStorage) and form.image.data.filename:
+            product.image = save_image(form.image.data)
+        db.session.commit()
+        flash('Producto actualizado exitosamente.', 'success')
+        return redirect(url_for('products.dashboard'))
+    return render_template('products/edit.html', form=form, product=product)
+
+@products.route('/products/<int:product_id>/delete', methods=['POST'])
+@login_required
+@vendedor_required
+def delete(product_id):
+    product = Product.query.get_or_404(product_id)
+    if product.user_id != current_user.id:
+        flash('No tienes permiso para eliminar este producto.', 'danger')
+        return redirect(url_for('products.dashboard'))
+    db.session.delete(product)
+    db.session.commit()
+    flash('Producto eliminado exitosamente.', 'success')
+    return redirect(url_for('products.dashboard'))
+
+def save_image(image_file):
+    ext = image_file.filename.rsplit('.', 1)[1].lower()
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+    image_file.save(path)
+    return filename

@@ -36,6 +36,11 @@ def create_app(testing=False):
     login_manager.init_app(app)
     csrf.init_app(app)
 
+    # Crear carpeta uploads si no existe
+    uploads_folder = os.path.join(app.root_path, 'static/uploads')
+    if not os.path.exists(uploads_folder):
+        os.makedirs(uploads_folder)
+
     login_manager.login_view = 'auth.login'
 
     # Registrar rutas
