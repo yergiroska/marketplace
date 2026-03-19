@@ -11,8 +11,25 @@ products = Blueprint('products', __name__)
 
 @products.route('/')
 def index():
-    all_products = Product.query.all()
-    return render_template('products/index.html', products=all_products)
+    category_id = request.args.get('category_id', type=int)
+    search = request.args.get('search', '')
+
+    query = Product.query.filter(Product.stock > 0)
+    if category_id:
+        query = query.filter_by(category_id = category_id)
+
+    if search:
+        query = query.filter(Product.name.ilike(f'%{search}%'))
+
+    all_products = query.order_by(Product.created_at.desc()).all()
+    categories = Category.query.all()
+
+    return render_template('products/index.html',
+        products=all_products,
+        categories=categories,
+        category_id=category_id,
+        search=search
+    )
 
 @products.route('/dashboard')
 @login_required

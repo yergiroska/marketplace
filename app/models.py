@@ -19,6 +19,7 @@ class User(UserMixin, db.Model):
 
     products = db.relationship('Product', backref='seller', lazy=True)
     orders = db.relationship('Order', backref='buyer', lazy=True)
+    cart_items = db.relationship('CartItem', backref='user', lazy=True)
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -96,3 +97,18 @@ class OrderItem(db.Model):
 
     def __repr__(self):
         return f'<OrderItem {self.id}>'
+
+class CartItem(db.Model):
+    __tablename__ = 'cart_items'
+
+    id = db.Column(db.Integer, primary_key=True)
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+
+    product = db.relationship('Product', backref='cart_items', lazy=True)
+
+    def __repr__(self):
+        return f'<CartItem {self.id}>'

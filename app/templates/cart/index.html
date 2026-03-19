@@ -1,4 +1,82 @@
 {% extends 'base.html' %}
+
 {% block content %}
-<h2>Mi Carrito</h2>
+<h2 class="mb-4">🛒 Mi Carrito</h2>
+
+{% if cart_items %}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    {% for item in cart_items %}
+                    <div class="row align-items-center mb-3 pb-3 border-bottom">
+                        <div class="col-md-2">
+                            {% if item.product.image %}
+                                <img src="{{ url_for('static', filename='uploads/' + item.product.image) }}"
+                                     class="img-fluid rounded" style="height: 70px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-secondary rounded d-flex align-items-center justify-content-center"
+                                     style="height: 70px;">
+                                    <small class="text-white">Sin img</small>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="mb-0">{{ item.product.name }}</h6>
+                            <small class="text-muted">{{ item.product.price }} € c/u</small>
+                        </div>
+                        <div class="col-md-3">
+                            <form method="POST" action="{{ url_for('cart.update', item_id=item.id) }}" id="form-{{ item.id }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" name="quantity" value="{{ item.quantity }}"
+                                           min="0" class="form-control" style="max-width: 70px;"
+                                           onchange="document.getElementById('form-{{ item.id }}').submit()">
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <strong>{{ "%.2f"|format(item.product.price * item.quantity) }} €</strong>
+                        </div>
+                        <div class="col-md-1 text-end">
+                            <form method="POST" action="{{ url_for('cart.remove', item_id=item.id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">✕</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Resumen</h5>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Total:</span>
+                        <strong class="text-success">{{ "%.2f"|format(total) }} €</strong>
+                    </div>
+                    <form method="POST" action="{{ url_for('orders.create') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-success w-100">
+                            ✅ Confirmar Pedido
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <div class="text-center mt-5">
+        <h5 class="text-muted">Tu carrito está vacío.</h5>
+        <a href="{{ url_for('products.index') }}" class="btn btn-primary mt-3">
+            Ver productos
+        </a>
+    </div>
+{% endif %}
+
 {% endblock %}
