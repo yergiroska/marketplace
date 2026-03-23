@@ -34,6 +34,7 @@ def test_crear_producto(db):
     assert producto.seller.username == 'vendedor_prod'
 
 def test_vendedor_no_puede_ver_dashboard_sin_login(client):
+    client.get('/logout', follow_redirects=True)
     response = client.get('/dashboard', follow_redirects=True)
     assert response.status_code == 200
     assert 'Iniciar' .encode() in response.data

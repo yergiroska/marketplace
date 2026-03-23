@@ -1,4 +1,50 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Mis Pedidos</h2>
+<h2 class="mb-4">📦 Mis Pedidos</h2>
+{% if orders%}
+    {% for order in orders %}
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <span><strong>Pedido #{{ order.id }}</strong></span>
+                <span class="badge
+                    {% if order.status == 'pendiente' %}bg-warning text-dark
+                    {% elif order.status == 'enviado' %}bg-primary
+                    {% elif order.status == 'entregado' %}bg-success
+                    {% else %}bg-secondary
+                    {% endif %}">
+                    {{ order.status }}
+                </span>
+                <span class="text-muted">{{ order.created_at.strftime('%d/%m/%Y') }}</span>
+                <strong class="text-success">{{ "%.2f"|format(order.total) }} €</strong>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Precio unitario</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items %}
+                        <tr>
+                            <td>{{ item.product.name }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.price }} €</td>
+                            <td>{{ "%.2f"|format(item.price * item.quantity) }} €</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor%}
+{% else %}
+    <div class="text-center mt-5">
+        <h5 class="text-muted">No tienes pedidos todavía.</h5>
+        <a href="{{ url_for('products.index') }}" class="btn btn-primary mt-3">Ver productos</a>
+    </div>
+{% endif%}
 {% endblock %}

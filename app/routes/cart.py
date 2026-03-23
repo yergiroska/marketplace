@@ -8,7 +8,9 @@ cart = Blueprint('cart', __name__, url_prefix='/cart')
 
 @cart.route('/')
 @login_required
+@comprador_required
 def index():
+    db.session.expire_all()
     cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
     total = sum(item.product.price * item.quantity for item in cart_items)
     return render_template('cart/index.html', cart_items=cart_items, total=total)
