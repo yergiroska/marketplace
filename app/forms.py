@@ -59,3 +59,10 @@ class ProductForm(FlaskForm):
         FileAllowed(['jpg', 'png', 'jpeg'], 'Solo imágenes jpg y png.')
     ])
     submit = SubmitField('Guardar Producto')
+
+
+class CategoryForm(FlaskForm):
+    name = StringField('Nombre', validators=[
+        DataRequired(), Length(min=3, max=100)
+    ])
+    submit = SubmitField('Guardar Categoría')

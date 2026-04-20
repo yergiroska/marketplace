@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2 class="mb-4">📦 Pedidos de mis productos</h2>
+
+{% if order_items %}
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Pedido #</th>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio</th>
+                        <th>Subtotal</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order_items %}
+                    <tr>
+                        <td>#{{ item.order.id }}</td>
+                        <td>{{ item.product.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.price }} €</td>
+                        <td>{{ "%.2f"|format(item.price * item.quantity) }} €</td>
+                        <td>{{ item.order.created_at.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <span class="badge
+                                {% if item.order.status == 'pendiente' %}bg-warning text-dark
+                                {% elif item.order.status == 'enviado' %}bg-primary
+                                {% elif item.order.status == 'entregado' %}bg-success
+                                {% else %}bg-secondary
+                                {% endif %}">
+                                {{ item.order.status }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if item.order.status == 'pendiente' %}
+                            <form method="POST" action="{{ url_for('products.update_order_status', order_id=item.order.id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="status" value="enviado">
+                                <button type="submit" class="btn btn-sm btn-primary">Marcar enviado</button>
+                            </form>
+                            {% elif item.order.status == 'enviado' %}
+                                <span class="text-muted">Esperando confirmación</span>
+                            {% else %}
+                                <span class="text-success">✅ Entregado</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% else %}
+    <div class="text-center mt-5">
+        <h5 class="text-muted">No hay pedidos de tus productos todavía.</h5>
+    </div>
+{% endif %}
+{% endblock %}

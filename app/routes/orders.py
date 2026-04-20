@@ -52,3 +52,17 @@ def create():
     db.session.commit()
     flash('¡Pedido confirmado exitosamente!', 'success')
     return redirect(url_for('orders.index'))
+
+@orders.route('/<int:order_id>/confirm', methods=['POST'])
+@login_required
+@comprador_required
+def confirm_delivery(order_id):
+    order = Order.query.get_or_404(order_id)
+    if order.user_id != current_user.id:
+        flash('No tienes permiso para confirmar este pedido.', 'danger')
+        return redirect(url_for('orders.index'))
+    if order.status == 'enviado':
+        order.status = 'entregado'
+        db.session.commit()
+        flash('¡Entrega confirmada exitosamente!', 'success')
+    return redirect(url_for('orders.index'))

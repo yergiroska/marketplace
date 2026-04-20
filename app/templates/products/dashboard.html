@@ -22,8 +22,14 @@
                     <h5 class="card-title">{{ product.name }}</h5>
                     <p class="card-text text-muted">{{ product.description }}</p>
                     <p class="card-text">
-                        <strong>{{ product.price }}€</strong>
-                        <span class="text-muted ms-2">Stock: {{ product.stock }}</span>
+                        <strong>{{ product.price }} €</strong>
+                        {% if product.stock == 0 %}
+                            <span class="badge bg-danger ms-2">Sin stock</span>
+                        {% elif product.stock <= 3 %}
+                            <span class="badge bg-warning text-dark ms-2">Stock bajo: {{ product.stock }}</span>
+                        {% else %}
+                            <span class="text-muted ms-2">Stock: {{ product.stock }}</span>
+                        {% endif %}
                     </p>
                 </div>
                 <div class="card-footer d-flex justify-content-between">

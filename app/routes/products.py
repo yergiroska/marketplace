@@ -106,3 +106,74 @@ def save_image(image_file):
     path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
     image_file.save(path)
     return filename
+
+
+@products.route('/categories')
+@login_required
+@vendedor_required
+def categories():
+    all_categories = Category.query.all()
+    return render_template('products/categories.html', categories=all_categories)
+
+@products.route('/categories/create', methods=['GET', 'POST'])
+@login_required
+@vendedor_required
+def create_category():
+    from app.forms import CategoryForm
+    form = CategoryForm()
+    if form.validate_on_submit():
+        category = Category(name=form.name.data)
+        db.session.add(category)
+        db.session.commit()
+        flash('Categoria creado exitosamente.', 'success')
+        return redirect(url_for('products.categories'))
+    return render_template('products/create_category.html', form=form)
+
+@products.route('/categories/<int:category_id>/edit', methods=['GET', 'POST'])
+@login_required
+@vendedor_required
+def edit_category(category_id):
+    from app.forms import CategoryForm
+    category = Category.query.get_or_404(category_id)
+    form = CategoryForm(obj=category)
+    if form.validate_on_submit():
+        category.name = form.name.data
+        db.session.add(category)
+        db.session.commit()
+        flash('Categoria actualizada exitosamente.', 'success')
+        return redirect(url_for('products.categories'))
+    return render_template('products/edit_category.html', form=form)
+
+@products.route('/categories/<int:category_id>/delete', methods=['POST'])
+@login_required
+@vendedor_required
+def delete_category(category_id):
+    category = Category.query.get_or_404(category_id)
+    db.session.delete(category)
+    db.session.commit()
+    flash('Categoría eliminada.', 'success')
+    return redirect(url_for('products.categories'))
+
+@products.route('/orders')
+@login_required
+@vendedor_required
+def vendor_orders():
+    from app.models import OrderItem, Order
+    order_items = OrderItem.query.join(Product).filter(
+        Product.user_id == current_user.id
+    ).all()
+    return render_template('products/vendor_orders.html', order_items=order_items)
+
+@products.route('/orders/<int:order_id>/status', methods=['POST'])
+@login_required
+@vendedor_required
+def update_order_status(order_id):
+    from app.models import Order
+    from flask import request
+    order = Order.query.get_or_404(order_id)
+    new_status = request.form.get('status')
+    if new_status in ['enviado', 'entregado']:
+        order.status = new_status
+        db.session.commit()
+        flash('Estado del pedido actualizado.', 'success')
+    return redirect(url_for('products.vendor_orders'))

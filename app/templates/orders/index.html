@@ -4,7 +4,7 @@
 {% if orders%}
     {% for order in orders %}
         <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <span><strong>Pedido #{{ order.id }}</strong></span>
                 <span class="badge
                     {% if order.status == 'pendiente' %}bg-warning text-dark
@@ -15,8 +15,17 @@
                     {{ order.status }}
                 </span>
                 <span class="text-muted">{{ order.created_at.strftime('%d/%m/%Y') }}</span>
-                <strong class="text-success">{{ "%.2f"|format(order.total) }} €</strong>
+                <div class="d-flex align-items-center gap-2">
+                    <strong class="text-success">{{ "%.2f"|format(order.total) }} €</strong>
+                    {% if order.status == 'enviado' %}
+                        <form method="POST" action="{{ url_for('orders.confirm_delivery', order_id=order.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-success">✅ Confirmar entrega</button>
+                        </form>
+                    {% endif %}
+                </div>
             </div>
+
             <div class="card-body">
                 <table class="table table-sm mb-0">
                     <thead>
